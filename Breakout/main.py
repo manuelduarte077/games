@@ -1,5 +1,6 @@
 import pygame
 import random
+import os
 
 # Inicializar Pygame
 pygame.init()
@@ -27,6 +28,7 @@ paddle_speed = 10
 ball_speed = [5, -5]
 lives = 3
 score = 0
+high_score = 0
 difficulty = 1  # 1: Fácil, 2: Medio, 3: Difícil
 
 # Crear la plataforma
@@ -52,6 +54,19 @@ create_blocks()
 
 # Sistema de puntaje y fuente
 font = pygame.font.Font(None, 36)
+
+# Funciones para guardar y cargar el puntaje más alto
+def load_high_score():
+    global high_score
+    if os.path.exists("high_score.txt"):
+        with open("high_score.txt", "r") as file:
+            high_score = int(file.read())
+load_high_score()
+
+def save_high_score():
+    global high_score
+    with open("high_score.txt", "w") as file:
+        file.write(str(high_score))
 
 # Estados del juego
 menu = True
@@ -85,12 +100,14 @@ def draw_game_over():
     screen.fill(black)
     game_over_text = font.render("Juego Terminado", True, white)
     score_text = font.render("Puntaje: " + str(score), True, white)
+    high_score_text = font.render("Puntaje Más Alto: " + str(high_score), True, white)
     reset_text = font.render("Presiona 'R' para resetear", True, white)
     quit_text = font.render("Presiona 'Q' para salir", True, white)
     screen.blit(game_over_text, (screen_width // 2 - game_over_text.get_width() // 2, screen_height // 4))
     screen.blit(score_text, (screen_width // 2 - score_text.get_width() // 2, screen_height // 2))
-    screen.blit(reset_text, (screen_width // 2 - reset_text.get_width() // 2, screen_height // 2 + 50))
-    screen.blit(quit_text, (screen_width // 2 - quit_text.get_width() // 2, screen_height // 2 + 100))
+    screen.blit(high_score_text, (screen_width // 2 - high_score_text.get_width() // 2, screen_height // 2 + 50))
+    screen.blit(reset_text, (screen_width // 2 - reset_text.get_width() // 2, screen_height // 2 + 100))
+    screen.blit(quit_text, (screen_width // 2 - quit_text.get_width() // 2, screen_height // 2 + 150))
     pygame.display.flip()
 
 def reset_game():
@@ -103,6 +120,15 @@ def reset_game():
     game_over = False
     lives = 3
     ball_speed = [5 * difficulty, -5 * difficulty]
+
+# Música de fondo
+pygame.mixer.music.load("background_music.mp3")
+pygame.mixer.music.play(-1) 
+pygame.mixer.music.set_volume(0.5) 
+
+# Icono del juego
+icon = pygame.image.load("icon.png")
+pygame.display.set_icon(icon)
 
 # Bucle principal del juego
 while True:
@@ -171,7 +197,10 @@ while True:
                 ball_speed[1] = -ball_speed[1]
             else:
                 game_over = True
-                running = False  # Fin del juego si la pelota toca el fondo
+                running = False
+                if score > high_score:
+                    high_score = score
+                    save_high_score()
 
         # Colisiones con la plataforma
         if ball.colliderect(paddle):
@@ -194,8 +223,10 @@ while True:
         # Dibujar el puntaje y vidas
         score_text = font.render("Puntaje: " + str(score), True, white)
         lives_text = font.render("Vidas: " + str(lives), True, white)
+        high_score_text = font.render("Puntaje Más Alto: " + str(high_score), True, white)
         screen.blit(score_text, (10, 10))
         screen.blit(lives_text, (screen_width - 120, 10))
+        screen.blit(high_score_text, (screen_width // 2 - high_score_text.get_width() // 2, 10))
 
         pygame.display.flip()
         pygame.time.Clock().tick(60)
